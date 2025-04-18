@@ -15,7 +15,7 @@ public class Simulation {
 
     public void simulate(double limit) {
         for (double redrawTime = 0.1; redrawTime <= limit; redrawTime += 0.1) {
-            pq.add(new Event(redrawTime, null, null));
+            pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
         while (!pq.isEmpty()) {
@@ -23,25 +23,61 @@ public class Simulation {
             if (!e.isValid()) continue;
 
             double dt = e.time - t;
-            for (Particle p : particles)
-                p.move(dt);
+            for (Particle p : particles) p.move(dt);
             t = e.time;
 
-            if (e.a != null && e.b != null) e.a.bounceOff(e.b);
-            else if (e.a != null && e.b == null) e.a.bounceOffWall();
-            else if (e.a == null && e.b != null) e.b.bounceOffWall();
-            else if (e.a == null && e.b == null) {
-                guardarEstado(t);
+            if (e.a != null && e.b != null) {
+                e.a.bounceOff(e.b);  // Colisión entre partículas
+            } else if (e.a != null && e.b == null) {
+                e.a.bounceOffWall();  // Rebote contra la pared
+            } else if (e.a == null && e.b != null) {
+                e.b.bounceOffWall();  // Rebote contra la pared
+            } else if (e.a == null && e.b == null) {
+                guardarEstado(t);  // Guardar el estado de la simulación
             }
 
-            predict(e.a, limit);
-            predict(e.b, limit);
+            // Predecir los siguientes eventos de colisión
+            for (Particle p : particles) {
+                predict(p, limit);
+            }
         }
     }
 
+
     private void predict(Particle p, double limit) {
-        // Eventos ignorados por ahora
+        for (Particle other : particles) {
+            if (p != other) {
+                double dx = other.x - p.x;
+                double dy = other.y - p.y;
+                double dvx = other.vx - p.vx;
+                double dvy = other.vy - p.vy;
+
+                double dist = Math.sqrt(dx * dx + dy * dy);
+                double relVel = dx * dvx + dy * dvy;  // Producto escalar
+
+                // Si las partículas se acercan, predice el evento de colisión
+                if (relVel < 0 && dist < 2 * p.radius) {
+                    double d = dx * dx + dy * dy;
+                    double a = dvx * dvx + dvy * dvy;
+                    double b = 2 * (dx * dvx + dy * dvy);
+                    double c = d - 4 * p.radius * p.radius;
+                    double discriminant = b * b - 4 * a * c;
+
+                    if (discriminant >= 0) {
+                        double sqrtDisc = Math.sqrt(discriminant);
+                        double t1 = (-b - sqrtDisc) / (2 * a);
+                        double t2 = (-b + sqrtDisc) / (2 * a);
+                        double t = Math.min(t1, t2);
+
+                        if (t > 0 && t < limit) {
+                            pq.add(new Event(t + t, p, other));
+                        }
+                    }
+                }
+            }
+        }
     }
+
 
     private void guardarEstado(double tiempo) {
         try (FileWriter writer = new FileWriter("output.txt", true)) {

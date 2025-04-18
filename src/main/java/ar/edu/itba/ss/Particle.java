@@ -45,8 +45,34 @@ public class Particle {
     }
 
     public void bounceOff(Particle other) {
-        // No implementado (placeholder para colisiones entre partículas)
+        double dx = other.x - this.x;
+        double dy = other.y - this.y;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+        double overlap = 2 * radius - distance;
+
+        if (overlap > 0) {
+            double nx = dx / distance;
+            double ny = dy / distance;
+            double dotProduct = (vx - other.vx) * nx + (vy - other.vy) * ny;
+
+            // Reflexión en la dirección normal
+            vx -= dotProduct * nx;
+            vy -= dotProduct * ny;
+            other.vx += dotProduct * nx;
+            other.vy += dotProduct * ny;
+
+            // Resolver el solapamiento (si es necesario)
+            x -= overlap * nx / 2;
+            y -= overlap * ny / 2;
+            other.x += overlap * nx / 2;
+            other.y += overlap * ny / 2;
+
+            // Incrementar el contador de colisiones
+            collisionCount++;
+            other.collisionCount++;
+        }
     }
+
 
     public void bounceOffWall() {
         bounceIfWall(0.05); // radio del contenedor

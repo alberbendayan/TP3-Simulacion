@@ -21,7 +21,6 @@ public class Main {
             particles[i] = new Particle(x, y, vx, vy);
         }
 
-        // limpiar archivo antes de escribir
         try {
             new java.io.PrintWriter("output.txt").close();
         } catch (Exception e) {
