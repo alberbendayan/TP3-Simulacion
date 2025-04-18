@@ -2,8 +2,8 @@ package ar.edu.itba.ss;
 
 public class Particle {
     public double x, y, vx, vy;
-    public final double radius = 0.0005;
-    public final double mass = 1.0;
+    public double radius = 0.0005;
+    public double mass = 1.0;
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
@@ -13,13 +13,27 @@ public class Particle {
         this.vy = vy;
     }
 
-    public void updatePosition(double dt) {
-        x += vx * dt;
-        y += vy * dt;
+    public Particle(double x, double y, double vx, double vy,double radius) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.radius = radius;
+    }
+
+
+    public Particle(double x, double y, double vx, double vy,double radius,double mass) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.radius = radius;
+        this.mass = mass;
     }
 
     public void move(double dt) {
-        updatePosition(dt);
+        x += vx * dt;
+        y += vy * dt;
     }
 
     public void bounceIfWall(double boundaryRadius) {
@@ -48,28 +62,38 @@ public class Particle {
         double dx = other.x - this.x;
         double dy = other.y - this.y;
         double distance = Math.sqrt(dx * dx + dy * dy);
-        double overlap = 2 * radius - distance;
+        double overlap = this.radius + other.radius - distance;
 
         if (overlap > 0) {
+            // Normalizar el vector normal de colisión
             double nx = dx / distance;
             double ny = dy / distance;
+
+            // Velocidad relativa en la dirección normal
             double dotProduct = (vx - other.vx) * nx + (vy - other.vy) * ny;
 
-            // Reflexión en la dirección normal
-            vx -= dotProduct * nx;
-            vy -= dotProduct * ny;
-            other.vx += dotProduct * nx;
-            other.vy += dotProduct * ny;
+            // Solo procesar la colisión si las partículas se acercan
+            if (dotProduct < 0) {
+                // Calcular impulso considerando las masas
+                double massFactor1 = (2 * other.mass) / (this.mass + other.mass);
+                double massFactor2 = (2 * this.mass) / (this.mass + other.mass);
 
-            // Resolver el solapamiento (si es necesario)
-            x -= overlap * nx / 2;
-            y -= overlap * ny / 2;
-            other.x += overlap * nx / 2;
-            other.y += overlap * ny / 2;
+                // Actualizar velocidades según conservación de momento
+                vx -= massFactor1 * dotProduct * nx;
+                vy -= massFactor1 * dotProduct * ny;
+                other.vx += massFactor2 * dotProduct * nx;
+                other.vy += massFactor2 * dotProduct * ny;
 
-            // Incrementar el contador de colisiones
-            collisionCount++;
-            other.collisionCount++;
+                // Corregir solapamiento
+                x -= overlap * nx / 2;
+                y -= overlap * ny / 2;
+                other.x += overlap * nx / 2;
+                other.y += overlap * ny / 2;
+
+                // Incrementar el contador de colisiones
+                collisionCount++;
+                other.collisionCount++;
+            }
         }
     }
 

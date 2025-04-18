@@ -13,8 +13,8 @@ public class Simulation {
         this.particles = particles;
     }
 
-    public void simulate(double limit) {
-        for (double redrawTime = 0.1; redrawTime <= limit; redrawTime += 0.1) {
+    public void simulate(double limit,double redrawPeriod) {
+        for (double redrawTime = redrawPeriod; redrawTime <= limit; redrawTime += redrawPeriod) {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
@@ -33,7 +33,7 @@ public class Simulation {
             } else if (e.a == null && e.b != null) {
                 e.b.bounceOffWall();  // Rebote contra la pared
             } else if (e.a == null && e.b == null) {
-                guardarEstado(t);  // Guardar el estado de la simulación
+                saveState(t);  // Guardar el estado de la simulación
             }
 
             // Predecir los siguientes eventos de colisión
@@ -53,10 +53,16 @@ public class Simulation {
                 double dvy = other.vy - p.vy;
 
                 double dist = Math.sqrt(dx * dx + dy * dy);
-                double relVel = dx * dvx + dy * dvy;  // Producto escalar
+                double relVel = dx * dvx + dy * dvy;
 
-                // Si las partículas se acercan, predice el evento de colisión
-                if (relVel < 0 && dist < 2 * p.radius) {
+                /*relVel < 0: Significa que las partículas se están acercando entre sí.
+                Un producto escalar negativo indica que los vectores tienen componentes en
+                direcciones opuestas.
+                dist < 2 * p.radius: Comprueba si la distancia entre partículas es menor que
+                la suma de sus diámetros .
+
+                 */
+                if (relVel < 0 && dist <  other.radius + p.radius) {
                     double d = dx * dx + dy * dy;
                     double a = dvx * dvx + dvy * dvy;
                     double b = 2 * (dx * dvx + dy * dvy);
@@ -67,10 +73,17 @@ public class Simulation {
                         double sqrtDisc = Math.sqrt(discriminant);
                         double t1 = (-b - sqrtDisc) / (2 * a);
                         double t2 = (-b + sqrtDisc) / (2 * a);
-                        double t = Math.min(t1, t2);
+                        double timeCol = -1;
+                        if(t1>=0 && t2>=0){
+                            timeCol = Math.min(t1, t2);
+                        }else if(t1>=0) {
+                            timeCol = t1;
+                        }else if(t2>=0) {
+                            timeCol = t2;
+                        }
 
-                        if (t > 0 && t < limit) {
-                            pq.add(new Event(t + t, p, other));
+                        if (timeCol > 0 && this.t + timeCol < limit) {
+                            pq.add(new Event(this.t + timeCol, p, other));
                         }
                     }
                 }
@@ -79,7 +92,7 @@ public class Simulation {
     }
 
 
-    private void guardarEstado(double tiempo) {
+    private void saveState(double time) {
         try (FileWriter writer = new FileWriter("output.txt", true)) {
             for (Particle p : particles) {
                 writer.write(String.format("%.5f %.5f\n", p.x, p.y));
