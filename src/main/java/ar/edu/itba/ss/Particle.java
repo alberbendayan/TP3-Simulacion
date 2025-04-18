@@ -2,8 +2,8 @@ package ar.edu.itba.ss;
 
 public class Particle {
     public double x, y, vx, vy;
-    public double radius = 0.0005;
-    public double mass = 1.0;
+    public double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
+    public double mass = Parameters.DEFAULT_MASS;
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
@@ -99,7 +99,7 @@ public class Particle {
 
 
     public void bounceOffWall() {
-        bounceIfWall(0.05); // radio del contenedor
+        bounceIfWall(Parameters.BIG_RADIUS); // radio del contenedor
     }
 
     public int getCollisionCount() {
