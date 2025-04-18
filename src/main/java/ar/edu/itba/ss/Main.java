@@ -4,7 +4,6 @@ import java.util.Random;
 
 public class Main {
 
-
     public static void main(String[] args) {
 
         for (String arg : args) {
@@ -55,6 +54,7 @@ public class Main {
 
             particles[i] = new Particle(x, y, vx, vy);
         }
+
         try {
             new java.io.PrintWriter("output.txt").close();
         } catch (Exception e) {
@@ -62,6 +62,7 @@ public class Main {
         }
 
         Simulation sim = new Simulation(particles);
-        sim.simulate(10.0,0.1);
+        sim.simulate(10.0, 0.1);
     }
+
 }

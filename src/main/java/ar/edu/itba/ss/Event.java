@@ -1,6 +1,7 @@
 package ar.edu.itba.ss;
 
 public class Event implements Comparable<Event> {
+
     public final double time;
     public final Particle a, b;
     private final int countA, countB;
@@ -22,4 +23,5 @@ public class Event implements Comparable<Event> {
     public int compareTo(Event that) {
         return Double.compare(this.time, that.time);
     }
+
 }

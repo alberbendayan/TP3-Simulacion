@@ -36,3 +36,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Misc ###
+*.vim
+output.txt
+results/

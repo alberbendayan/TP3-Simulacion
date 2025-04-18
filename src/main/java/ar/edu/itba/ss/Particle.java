@@ -1,6 +1,7 @@
 package ar.edu.itba.ss;
 
 public class Particle {
+
     public double x, y, vx, vy;
     public double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
     public double mass = Parameters.DEFAULT_MASS;
@@ -105,4 +106,5 @@ public class Particle {
     public int getCollisionCount() {
         return collisionCount;
     }
+
 }

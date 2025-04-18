@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.PriorityQueue;
 
 public class Simulation {
+
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final Particle[] particles;
     private double t = 0.0;
@@ -13,7 +14,7 @@ public class Simulation {
         this.particles = particles;
     }
 
-    public void simulate(double limit,double redrawPeriod) {
+    public void simulate(double limit, double redrawPeriod) {
         for (double redrawTime = redrawPeriod; redrawTime <= limit; redrawTime += redrawPeriod) {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
@@ -23,23 +24,23 @@ public class Simulation {
             if (!e.isValid()) continue;
 
             double dt = e.time - t;
-            for (Particle p : particles) p.move(dt);
+            for (Particle p : particles)
+                p.move(dt);
+
             t = e.time;
 
-            if (e.a != null && e.b != null) {
+            if (e.a != null && e.b != null)
                 e.a.bounceOff(e.b);  // Colisión entre partículas
-            } else if (e.a != null && e.b == null) {
+            else if (e.a != null && e.b == null)
                 e.a.bounceOffWall();  // Rebote contra la pared
-            } else if (e.a == null && e.b != null) {
+            else if (e.a == null && e.b != null)
                 e.b.bounceOffWall();  // Rebote contra la pared
-            } else if (e.a == null && e.b == null) {
+            else if (e.a == null && e.b == null)
                 saveState(t);  // Guardar el estado de la simulación
-            }
 
             // Predecir los siguientes eventos de colisión
-            for (Particle p : particles) {
+            for (Particle p : particles)
                 predict(p, limit);
-            }
         }
     }
 
@@ -62,7 +63,7 @@ public class Simulation {
                 la suma de sus diámetros .
 
                  */
-                if (relVel < 0 && dist <  other.radius + p.radius) {
+                if (relVel < 0 && dist < other.radius + p.radius) {
                     double d = dx * dx + dy * dy;
                     double a = dvx * dvx + dvy * dvy;
                     double b = 2 * (dx * dvx + dy * dvy);
@@ -74,11 +75,11 @@ public class Simulation {
                         double t1 = (-b - sqrtDisc) / (2 * a);
                         double t2 = (-b + sqrtDisc) / (2 * a);
                         double timeCol = -1;
-                        if(t1>=0 && t2>=0){
+                        if (t1 >= 0 && t2 >= 0) {
                             timeCol = Math.min(t1, t2);
-                        }else if(t1>=0) {
+                        } else if (t1 >= 0) {
                             timeCol = t1;
-                        }else if(t2>=0) {
+                        } else if (t2 >= 0) {
                             timeCol = t2;
                         }
 
@@ -102,4 +103,5 @@ public class Simulation {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
         }
     }
+
 }
