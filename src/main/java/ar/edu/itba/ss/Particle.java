@@ -1,4 +1,4 @@
-package org.example;
+package ar.edu.itba.ss;
 
 public class Particle {
     public double x, y, vx, vy;

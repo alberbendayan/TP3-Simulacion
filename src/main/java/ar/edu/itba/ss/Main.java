@@ -1,4 +1,4 @@
-package org.example;
+package ar.edu.itba.ss;
 
 import java.util.Random;
 

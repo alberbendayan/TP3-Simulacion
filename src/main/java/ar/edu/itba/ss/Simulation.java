@@ -1,4 +1,4 @@
-package org.example;
+package ar.edu.itba.ss;
 
 import java.io.FileWriter;
 import java.io.IOException;
