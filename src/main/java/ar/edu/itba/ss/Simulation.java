@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -11,6 +12,7 @@ import java.util.PriorityQueue;
 
 public class Simulation {
 
+    private final DecimalFormat df = new DecimalFormat("00.00");
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final Particle[] particles;
     private final String resultsPath;
@@ -37,6 +39,10 @@ public class Simulation {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
+        for (Particle p : particles) {
+            predict(p, limit);
+        }
+
         while (!pq.isEmpty()) {
             Event e = pq.poll();
             if (!e.isValid())
@@ -51,20 +57,28 @@ public class Simulation {
             if (e.getA() != null && e.getB() != null)
                 e.getA().bounceOff(e.getB());  // Colisión entre partículas
             else if (e.getA() != null && e.getB() == null)
-                e.getA().bounceOffWall();  // Rebote contra la pared
+                e.getA().bounceOffCircularWall();  // Rebote contra la pared
             else if (e.getA() == null && e.getB() != null)
-                e.getB().bounceOffWall();  // Rebote contra la pared
-            else if (e.getA() == null && e.getA() == null)
+                e.getB().bounceOffObstacle();  // Rebote contra obstáculo
+            else if (e.getA() == null && e.getB() == null)
                 saveState(t);  // Guardar el estado de la simulación
 
             // Predecir los siguientes eventos de colisión
-            for (Particle p : particles)
-                predict(p, limit);
+            if (e.getA() != null) predict(e.getA(), limit);
+            if (e.getB() != null) predict(e.getB(), limit);
         }
     }
 
-
     private void predict(Particle p, double limit) {
+
+        double tWall = timeToCircularWallCollision(p);
+        if (tWall > 0 && t + tWall < limit)
+            pq.add(new Event(t + tWall, p, null));
+
+        double tObstacle = timeToObstacleCollision(p);
+        if (tObstacle > 0 && t + tObstacle < limit)
+            pq.add(new Event(t + tObstacle, null, p));
+
         for (Particle other : particles) {
             if (p != other) {
                 double dx = other.x - p.x;
@@ -75,18 +89,11 @@ public class Simulation {
                 double dist = Math.sqrt(dx * dx + dy * dy);
                 double relVel = dx * dvx + dy * dvy;
 
-                /*
-                 * - relVel < 0: Significa que las partículas se están acercando entre sí.
-                 *     Un producto escalar negativo indica que los vectores tienen componentes en
-                 *     direcciones opuestas.
-                 * - dist < 2 * p.radius: Comprueba si la distancia entre partículas es menor que
-                 *     la suma de sus diámetros.
-                 */
                 if (relVel < 0 && dist < other.radius + p.radius) {
                     double d = dx * dx + dy * dy;
                     double a = dvx * dvx + dvy * dvy;
                     double b = 2 * (dx * dvx + dy * dvy);
-                    double c = d - 4 * p.radius * p.radius;
+                    double c = d - (p.radius + other.radius) * (p.radius + other.radius);
                     double discriminant = b * b - 4 * a * c;
 
                     if (discriminant >= 0) {
@@ -110,8 +117,50 @@ public class Simulation {
         }
     }
 
+    private double timeToCircularWallCollision(Particle p) {
+        double radius = 0.05; // L/2
+        double px = p.x, py = p.y;
+        double vx = p.vx, vy = p.vy;
+        double pr = p.radius;
+
+        double A = vx * vx + vy * vy;
+        double B = 2 * (px * vx + py * vy);
+        double C = px * px + py * py - (radius - pr) * (radius - pr);
+
+        double discriminant = B * B - 4 * A * C;
+        if (discriminant < 0) return -1;
+
+        double sqrtD = Math.sqrt(discriminant);
+        double t1 = (-B + sqrtD) / (2 * A);
+        double t2 = (-B - sqrtD) / (2 * A);
+
+        double t = (t1 > 0 && t2 > 0) ? Math.min(t1, t2) : (t1 > 0 ? t1 : t2);
+        return t > 0 ? t : -1;
+    }
+
+    private double timeToObstacleCollision(Particle p) {
+        double obstacleRadius = 0.005;
+        double px = p.x, py = p.y;
+        double vx = p.vx, vy = p.vy;
+        double pr = p.radius;
+
+        double A = vx * vx + vy * vy;
+        double B = 2 * (px * vx + py * vy);
+        double C = px * px + py * py - (obstacleRadius + pr) * (obstacleRadius + pr);
+
+        double discriminant = B * B - 4 * A * C;
+        if (discriminant < 0) return -1;
+
+        double sqrtD = Math.sqrt(discriminant);
+        double t1 = (-B + sqrtD) / (2 * A);
+        double t2 = (-B - sqrtD) / (2 * A);
+
+        double t = (t1 > 0 && t2 > 0) ? Math.min(t1, t2) : (t1 > 0 ? t1 : t2);
+        return t > 0 ? t : -1;
+    }
+
     private void saveState(double time) {
-        String fileName = String.format(Locale.US, "%s/snapshot-%.2f.txt", resultsPath, time);
+        String fileName = String.format(Locale.US, "%s/snapshot-%s.txt", resultsPath, df.format(time));
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Particle p : particles)
@@ -121,5 +170,4 @@ public class Simulation {
             System.exit(1);
         }
     }
-
 }
