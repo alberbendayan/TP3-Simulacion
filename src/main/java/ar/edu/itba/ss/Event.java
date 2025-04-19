@@ -2,8 +2,8 @@ package ar.edu.itba.ss;
 
 public class Event implements Comparable<Event> {
 
-    public final double time;
-    public final Particle a, b;
+    private final double time;
+    private final Particle a, b;
     private final int countA, countB;
 
     public Event(double t, Particle a, Particle b) {
@@ -12,6 +12,18 @@ public class Event implements Comparable<Event> {
         this.b = b;
         this.countA = a != null ? a.getCollisionCount() : -1;
         this.countB = b != null ? b.getCollisionCount() : -1;
+    }
+
+    public Particle getA() {
+        return a;
+    }
+
+    public Particle getB() {
+        return b;
+    }
+
+    public double getTime() {
+        return time;
     }
 
     public boolean isValid() {

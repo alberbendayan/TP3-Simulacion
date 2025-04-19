@@ -5,7 +5,6 @@ import java.util.Random;
 public class Main {
 
     public static void main(String[] args) {
-
         for (String arg : args) {
             String[] parts = arg.split("=");
             if (parts.length != 2) continue; // ignora mal formateados
@@ -30,6 +29,9 @@ public class Main {
                     case "DEFAULT_MASS":
                         Parameters.DEFAULT_MASS = Double.parseDouble(value);
                         break;
+                    case "PARTICLE_COUNT":
+                        Parameters.PARTICLE_COUNT = Integer.parseInt(value);
+                        break;
                     default:
                         System.out.println("Parámetro desconocido: " + key);
                 }
@@ -38,7 +40,7 @@ public class Main {
             }
         }
 
-        Particle[] particles = new Particle[200];
+        Particle[] particles = new Particle[Parameters.PARTICLE_COUNT];
         Random rand = new Random();
 
         for (int i = 0; i < particles.length; i++) {
@@ -47,7 +49,7 @@ public class Main {
             double vx = speed * Math.cos(angle);
             double vy = speed * Math.sin(angle);
 
-            double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS);
+            double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS) + Parameters.SMALL_RADIUS;
             double anglePos = rand.nextDouble() * 2 * Math.PI;
             double x = radius * Math.cos(anglePos);
             double y = radius * Math.sin(anglePos);
@@ -61,7 +63,7 @@ public class Main {
             System.err.println("No se pudo limpiar output.txt");
         }
 
-        Simulation sim = new Simulation(particles);
+        Simulation sim = new Simulation(particles, "results");
         sim.simulate(10.0, 0.1);
     }
 

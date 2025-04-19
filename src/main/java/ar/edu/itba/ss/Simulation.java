@@ -1,41 +1,60 @@
 package ar.edu.itba.ss;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.PriorityQueue;
 
 public class Simulation {
 
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final Particle[] particles;
+    private final String resultsPath;
+
     private double t = 0.0;
 
-    public Simulation(Particle[] particles) {
+    public Simulation(Particle[] particles, String resultsPath) {
         this.particles = particles;
+        this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
+
+        File dir = new File(this.resultsPath);
+        if (!dir.exists() && !dir.mkdirs()) {
+            System.err.println("Error al crear el directorio de resultados: " + resultsPath);
+            System.exit(1);
+        }
+
+        saveState(0.0);  // Guardar el estado inicial
     }
 
     public void simulate(double limit, double redrawPeriod) {
+        t = 0.0;
+
         for (double redrawTime = redrawPeriod; redrawTime <= limit; redrawTime += redrawPeriod) {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
         while (!pq.isEmpty()) {
             Event e = pq.poll();
-            if (!e.isValid()) continue;
+            if (!e.isValid())
+                continue;
 
-            double dt = e.time - t;
+            double dt = e.getTime() - t;
             for (Particle p : particles)
                 p.move(dt);
 
-            t = e.time;
+            t = e.getTime();
 
-            if (e.a != null && e.b != null)
-                e.a.bounceOff(e.b);  // Colisión entre partículas
-            else if (e.a != null && e.b == null)
-                e.a.bounceOffWall();  // Rebote contra la pared
-            else if (e.a == null && e.b != null)
-                e.b.bounceOffWall();  // Rebote contra la pared
-            else if (e.a == null && e.b == null)
+            if (e.getA() != null && e.getB() != null)
+                e.getA().bounceOff(e.getB());  // Colisión entre partículas
+            else if (e.getA() != null && e.getB() == null)
+                e.getA().bounceOffWall();  // Rebote contra la pared
+            else if (e.getA() == null && e.getB() != null)
+                e.getB().bounceOffWall();  // Rebote contra la pared
+            else if (e.getA() == null && e.getA() == null)
                 saveState(t);  // Guardar el estado de la simulación
 
             // Predecir los siguientes eventos de colisión
@@ -56,12 +75,12 @@ public class Simulation {
                 double dist = Math.sqrt(dx * dx + dy * dy);
                 double relVel = dx * dvx + dy * dvy;
 
-                /*relVel < 0: Significa que las partículas se están acercando entre sí.
-                Un producto escalar negativo indica que los vectores tienen componentes en
-                direcciones opuestas.
-                dist < 2 * p.radius: Comprueba si la distancia entre partículas es menor que
-                la suma de sus diámetros .
-
+                /*
+                 * - relVel < 0: Significa que las partículas se están acercando entre sí.
+                 *     Un producto escalar negativo indica que los vectores tienen componentes en
+                 *     direcciones opuestas.
+                 * - dist < 2 * p.radius: Comprueba si la distancia entre partículas es menor que
+                 *     la suma de sus diámetros.
                  */
                 if (relVel < 0 && dist < other.radius + p.radius) {
                     double d = dx * dx + dy * dy;
@@ -75,32 +94,31 @@ public class Simulation {
                         double t1 = (-b - sqrtDisc) / (2 * a);
                         double t2 = (-b + sqrtDisc) / (2 * a);
                         double timeCol = -1;
-                        if (t1 >= 0 && t2 >= 0) {
-                            timeCol = Math.min(t1, t2);
-                        } else if (t1 >= 0) {
-                            timeCol = t1;
-                        } else if (t2 >= 0) {
-                            timeCol = t2;
-                        }
 
-                        if (timeCol > 0 && this.t + timeCol < limit) {
-                            pq.add(new Event(this.t + timeCol, p, other));
-                        }
+                        if (t1 >= 0 && t2 >= 0)
+                            timeCol = Math.min(t1, t2);
+                        else if (t1 >= 0)
+                            timeCol = t1;
+                        else if (t2 >= 0)
+                            timeCol = t2;
+
+                        if (timeCol > 0 && t + timeCol < limit)
+                            pq.add(new Event(t + timeCol, p, other));
                     }
                 }
             }
         }
     }
 
-
     private void saveState(double time) {
-        try (FileWriter writer = new FileWriter("output.txt", true)) {
-            for (Particle p : particles) {
+        String fileName = String.format(Locale.US, "%s/snapshot-%.2f.txt", resultsPath, time);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            for (Particle p : particles)
                 writer.write(String.format("%.5f %.5f\n", p.x, p.y));
-            }
-            writer.write("---\n");
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
+            System.exit(1);
         }
     }
 

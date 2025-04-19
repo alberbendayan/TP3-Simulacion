@@ -5,6 +5,7 @@ public class Particle {
     public double x, y, vx, vy;
     public double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
     public double mass = Parameters.DEFAULT_MASS;
+
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
@@ -14,7 +15,7 @@ public class Particle {
         this.vy = vy;
     }
 
-    public Particle(double x, double y, double vx, double vy,double radius) {
+    public Particle(double x, double y, double vx, double vy, double radius) {
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -23,7 +24,7 @@ public class Particle {
     }
 
 
-    public Particle(double x, double y, double vx, double vy,double radius,double mass) {
+    public Particle(double x, double y, double vx, double vy, double radius, double mass) {
         this.x = x;
         this.y = y;
         this.vx = vx;
