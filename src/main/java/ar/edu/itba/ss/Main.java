@@ -44,21 +44,39 @@ public class Main {
 
         List<Particle> particles = new ArrayList<>();
         Random rand = new Random();
+        Double minDistance = Parameters.PARTICLE_DEFAULT_RADIUS * 2;
 
         for (int i = 0; i < Parameters.PARTICLE_COUNT; i++) {
+            double x = 0, y = 0;
+            boolean valid = false;
+
+            while (!valid) {
+                valid = true;
+
+                double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS) + Parameters.SMALL_RADIUS;
+                double anglePos = rand.nextDouble() * 2 * Math.PI;
+                x = radius * Math.cos(anglePos);
+                y = radius * Math.sin(anglePos);
+
+                for (Particle p : particles) {
+                    double dx = x - p.x;
+                    double dy = y - p.y;
+                    double distSq = dx * dx + dy * dy;
+
+                    if (distSq < minDistance * minDistance) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+
             double angle = rand.nextDouble() * 2 * Math.PI;
             double speed = Parameters.SPEED;
             double vx = speed * Math.cos(angle);
             double vy = speed * Math.sin(angle);
-
-            double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS) + Parameters.SMALL_RADIUS;
-            double anglePos = rand.nextDouble() * 2 * Math.PI;
-            double x = radius * Math.cos(anglePos);
-            double y = radius * Math.sin(anglePos);
-
+            System.out.println("Particle " + i );
             particles.add(new Particle(x, y, vx, vy));
         }
-
         Simulation sim = new Simulation(particles, "results");
         sim.simulate(10.0, 0.1);
     }
