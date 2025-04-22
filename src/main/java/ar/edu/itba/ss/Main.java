@@ -74,7 +74,6 @@ public class Main {
             double speed = Parameters.SPEED;
             double vx = speed * Math.cos(angle);
             double vy = speed * Math.sin(angle);
-            System.out.println("Particle " + i );
             particles.add(new Particle(x, y, vx, vy));
         }
         Simulation sim = new Simulation(particles, "results");
