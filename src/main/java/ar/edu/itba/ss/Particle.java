@@ -5,7 +5,7 @@ public class Particle {
     public static int LAST_ID = 1;
 
     public final int id;
-    public final double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
+    public final double radius = Parameters.PARTICLE_RADIUS;
 
     public double x, y;
     public double vx, vy;
@@ -18,7 +18,7 @@ public class Particle {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
-        this.mass = Parameters.DEFAULT_MASS;
+        this.mass = Parameters.MASS;
     }
 
     public void move(double dt) {

@@ -40,10 +40,6 @@ public class Simulation {
     public void simulate(double limit) {
         t = 0.0;
 
-        for (double redrawTime = Parameters.REDRAW_PERIOD; redrawTime <= limit; redrawTime += Parameters.REDRAW_PERIOD) {
-            pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
-        }
-
         for (Particle p : particles) {
             predict(p, limit);
         }
@@ -65,8 +61,8 @@ public class Simulation {
                 e.getA().bounceOffCircularWall();  // Rebote contra la pared
             else if (e.getA() == null && e.getB() != null)
                 e.getB().bounceOffObstacle();  // Rebote contra obstáculo
-            else if (e.getA() == null && e.getB() == null)
-                saveState(t);  // Guardar el estado de la simulación
+
+            saveState(t);  // Guardar el estado de la simulación
 
             // Predecir los siguientes eventos de colisión
             if (e.getA() != null) predict(e.getA(), limit);
@@ -198,7 +194,7 @@ public class Simulation {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Particle p : particles)
-                writer.write(String.format(Locale.US, "%.5f %.5f\n", p.x, p.y));
+                writer.write(String.format(Locale.US, "%.5f %.5f %.5f %.5f\n", p.x, p.y, p.vx, p.vy));
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
             System.exit(1);
@@ -219,9 +215,9 @@ public class Simulation {
             writer.write("{\n");
             writer.write("  \"big_radius\": " + Parameters.BIG_RADIUS + ",\n");
             writer.write("  \"small_radius\": " + Parameters.SMALL_RADIUS + ",\n");
-            writer.write("  \"particle_radius\": " + Parameters.PARTICLE_DEFAULT_RADIUS + ",\n");
+            writer.write("  \"particle_radius\": " + Parameters.PARTICLE_RADIUS + ",\n");
             writer.write("  \"speed\": " + Parameters.SPEED + ",\n");
-            writer.write("  \"mass\": " + Parameters.DEFAULT_MASS + ",\n");
+            writer.write("  \"mass\": " + Parameters.MASS + ",\n");
             writer.write("  \"time_limit\": " + Parameters.TIME_LIMIT + ",\n");
             writer.write("  \"redraw_period\": " + Parameters.REDRAW_PERIOD + ",\n");
             writer.write("  \"particle_count\": " + Parameters.PARTICLE_COUNT + "\n");

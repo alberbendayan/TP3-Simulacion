@@ -22,14 +22,14 @@ public class Main {
                     case "SMALL_RADIUS":
                         Parameters.SMALL_RADIUS = Double.parseDouble(value);
                         break;
-                    case "PARTICLE_DEFAULT_RADIUS":
-                        Parameters.PARTICLE_DEFAULT_RADIUS = Double.parseDouble(value);
+                    case "PARTICLE_RADIUS":
+                        Parameters.PARTICLE_RADIUS = Double.parseDouble(value);
                         break;
                     case "SPEED":
                         Parameters.SPEED = Double.parseDouble(value);
                         break;
-                    case "DEFAULT_MASS":
-                        Parameters.DEFAULT_MASS = Double.parseDouble(value);
+                    case "MASS":
+                        Parameters.MASS = Double.parseDouble(value);
                         break;
                     case "TIME_LIMIT":
                         Parameters.TIME_LIMIT = Double.parseDouble(value);
@@ -50,7 +50,7 @@ public class Main {
 
         List<Particle> particles = new ArrayList<>();
         Random rand = new Random();
-        Double minDistance = Parameters.PARTICLE_DEFAULT_RADIUS * 2;
+        Double minDistance = Parameters.PARTICLE_RADIUS * 2;
 
         for (int i = 0; i < Parameters.PARTICLE_COUNT; i++) {
             double x = 0, y = 0;
@@ -59,7 +59,7 @@ public class Main {
             while (!valid) {
                 valid = true;
 
-                double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS - Parameters.PARTICLE_DEFAULT_RADIUS * 2) + Parameters.SMALL_RADIUS + Parameters.PARTICLE_DEFAULT_RADIUS;
+                double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS - Parameters.PARTICLE_RADIUS * 2) + Parameters.SMALL_RADIUS + Parameters.PARTICLE_RADIUS;
                 double anglePos = rand.nextDouble() * 2 * Math.PI;
                 x = radius * Math.cos(anglePos);
                 y = radius * Math.sin(anglePos);

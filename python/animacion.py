@@ -15,8 +15,8 @@ def read_snapshots(directory):
 
     for fname in files:
         with open(fname) as f:
-            positions = [list(map(float, line.split())) for line in f if line.strip()]
-            snapshots.append(np.array(positions))
+            states = [list(map(float, line.split()[:2])) for line in f if line.strip()]
+            snapshots.append(np.array(states))
 
     return snapshots
 
@@ -62,7 +62,7 @@ def main():
             p.center = positions[i]
         return particles
 
-    ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False, interval=redraw_period * 1000)
+    ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False)
     ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=1 / redraw_period)
 
 
