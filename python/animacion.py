@@ -64,7 +64,7 @@ def main():
         return (scat,)
 
     ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False, interval=redraw_period * 1000)
-    ani.save("animation.mp4", writer="ffmpeg", fps=1 / redraw_period)
+    ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=1 / redraw_period)
 
 
 if __name__ == "__main__":

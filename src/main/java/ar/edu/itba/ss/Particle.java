@@ -9,6 +9,7 @@ public class Particle {
 
     public double x, y;
     public double vx, vy;
+    public double mass;
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
@@ -17,6 +18,7 @@ public class Particle {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
+        this.mass = Parameters.DEFAULT_MASS;
     }
 
     public void move(double dt) {
@@ -33,15 +35,15 @@ public class Particle {
         double dvdr = dx * dvx + dy * dvy;
         double dist = this.radius + that.radius;
 
-        double magnitude = 2 * Parameters.DEFAULT_MASS * Parameters.DEFAULT_MASS * dvdr / ((Parameters.DEFAULT_MASS + Parameters.DEFAULT_MASS) * dist);
+        // magnitud del impulso
+        double J = 2 * this.mass * that.mass * dvdr / ((this.mass + that.mass) * dist);
+        double Jx = J * dx / dist;
+        double Jy = J * dy / dist;
 
-        double fx = magnitude * dx / dist;
-        double fy = magnitude * dy / dist;
-
-        this.vx += fx / Parameters.DEFAULT_MASS;
-        this.vy += fy / Parameters.DEFAULT_MASS;
-        that.vx -= fx / Parameters.DEFAULT_MASS;
-        that.vy -= fy / Parameters.DEFAULT_MASS;
+        this.vx += Jx / this.mass;
+        this.vy += Jy / this.mass;
+        that.vx -= Jx / that.mass;
+        that.vy -= Jy / that.mass;
 
         this.collisionCount++;
         that.collisionCount++;
