@@ -117,84 +117,61 @@ public class Simulation {
         if (tObstacle > EPSILON && t + tObstacle < limit)
             pq.add(new Event(t + tObstacle, null, p));
 
-        for (Particle other : cim.findNeighbors(p)) {
-            if (p != other) {
-                ParticlePair pair = new ParticlePair(p, other);
-                Double lastCollision = recentCollisions.get(pair);
-                if (lastCollision != null && t - lastCollision < COLLISION_GRACE_PERIOD) {
-                    continue;
-                }
-                double dx = other.x - p.x;
-                double dy = other.y - p.y;
-                double dvx = other.vx - p.vx;
-                double dvy = other.vy - p.vy;
 
-                // Producto escalar entre vector posición relativa y vector velocidad relativa
-                double relVel = dx * dvx + dy * dvy;
+        for (Particle other : cim.getParticles()) {
+            if (p.id == other.id) continue;
 
-                // Solo procede si las partículas se están acercando
-                if (relVel < 0) {
-                    double d = dx * dx + dy * dy;
-                    double sigma = p.radius + other.radius;
-
-                    // Si las partículas ya están superpuestas pero se están alejando, ignorar
-                    if (d < sigma * sigma && relVel > 0) continue;
-
-                    double a = dvx * dvx + dvy * dvy;
-                    double b = 2 * relVel;
-                    double c = d - sigma * sigma;
-                    double discriminant = b * b - 4 * a * c;
-
-                    if (discriminant >= 0) {
-                        double sqrtDisc = Math.sqrt(discriminant);
-                        double t1 = (-b - sqrtDisc) / (2 * a);
-                        double t2 = (-b + sqrtDisc) / (2 * a);
-                        double timeCol = -1;
-
-                        // Si las partículas ya están superpuestas y acercándose
-                        if (c < 0) {
-                            // Calcular el tiempo cuando alcanzarán máxima superposición
-                            timeCol = -b / (2 * a);
-                            if (timeCol < EPSILON) {
-                                // Si el tiempo es muy pequeño, programa una colisión inmediata
-                                timeCol = EPSILON;
-                            }
-                        } else {
-                            if (t1 >= 0 && t2 >= 0)
-                                timeCol = Math.min(t1, t2);
-                            else if (t1 >= 0)
-                                timeCol = t1;
-                            else if (t2 >= 0)
-                                timeCol = t2;
-                        }
-
-                        if (timeCol > 0 && t + timeCol < limit)
-                            pq.add(new Event(t + timeCol, p, other));
-                    }
-                }
+            ParticlePair pair = new ParticlePair(p, other);
+            Double lastCollision = recentCollisions.get(pair);
+            if (lastCollision != null && t - lastCollision < COLLISION_GRACE_PERIOD) {
+                continue;
             }
+
+            double dx   = other.x - p.x;
+            double dy   = other.y - p.y;
+            double dvx  = other.vx - p.vx;
+            double dvy  = other.vy - p.vy;
+
+            double dvdr = dx * dvx + dy * dvy;
+            double drdr = dx * dx + dy * dy;
+            double sigma= p.radius + other.radius;
+            double dvdv = dvx * dvx + dvy * dvy;
+
+
+            double D = dvdr*dvdr - dvdv*(drdr - sigma*sigma);
+
+            if (D < 0) continue;            // Δ < 0: no se cruzan
+            if (dvdr >= 0 && drdr >= sigma*sigma) continue;
+
+            double timeCol;
+            if (drdr < sigma*sigma) {
+                timeCol = EPSILON;
+            } else {
+                timeCol = -(dvdr + Math.sqrt(D)) / dvdv;
+            }
+
+            if (timeCol > EPSILON && t + timeCol < limit) {
+                pq.add(new Event(t + timeCol, p, other));
+            }
+
         }
     }
 
+
     private double timeToCircularWallCollision(Particle p) {
-        // Coordenadas del centro de la pared (asumiendo que está en (0,0))
         double x0 = p.x;
         double y0 = p.y;
 
-        // Velocidad de la partícula
         double vx = p.vx;
         double vy = p.vy;
 
-        // Radio de la pared (suponiendo que el radio de la pared es R)
         double R = Parameters.BIG_RADIUS;  // Esto es solo un ejemplo, usa el valor real de tu pared
 
-        // Coeficientes de la ecuación cuadrática
         double A = vx * vx + vy * vy;
         double B = 2 * (x0 * vx + y0 * vy);
         double effectiveRadius = R - p.radius;
         double C = x0 * x0 + y0 * y0 - effectiveRadius * effectiveRadius;
 
-        // Discriminante
         double discriminant = B * B - 4 * A * C;
 
         // Si el discriminante es negativo, no hay colisión
@@ -270,7 +247,6 @@ public class Simulation {
     }
 
     private void saveConfig() {
-        // Guardar config.json directamente en resultsPath
         File dir = new File(resultsPath);
         if (!dir.exists() && !dir.mkdirs()) {
             System.err.println("Error al crear el directorio de resultados: " + resultsPath);
