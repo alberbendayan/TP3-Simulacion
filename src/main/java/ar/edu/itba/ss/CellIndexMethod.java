@@ -35,7 +35,6 @@ class CellIndexMethod {
         int cellIndex = getCellIndex(p.x, p.y);
 
         List<Particle> possibleNeighbors = getPossibleNeighbors(cellIndex);
-
         for (Particle neighbor : possibleNeighbors) {
             if (p.id != neighbor.id) {
                 double distance;

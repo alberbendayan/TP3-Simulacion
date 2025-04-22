@@ -15,6 +15,36 @@ import java.util.PriorityQueue;
 public class Simulation {
 
     private final double EPSILON = 1e-8;
+    private static final double COLLISION_GRACE_PERIOD = 1e-3;  // Mayor que EPSILON
+    private static class ParticlePair {
+        final Particle p1, p2;
+
+        public ParticlePair(Particle p1, Particle p2) {
+            // Ordenar las partículas para mantener consistencia
+            if (p1.hashCode() <= p2.hashCode()) {
+                this.p1 = p1;
+                this.p2 = p2;
+            } else {
+                this.p1 = p2;
+                this.p2 = p1;
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ParticlePair that = (ParticlePair) o;
+            return (p1 == that.p1 && p2 == that.p2) || (p1 == that.p2 && p2 == that.p1);
+        }
+
+        @Override
+        public int hashCode() {
+            return p1.hashCode() + p2.hashCode();
+        }
+    }
+
+    private final java.util.Map<ParticlePair, Double> recentCollisions = new java.util.HashMap<>();
 
     private final DecimalFormat df = new DecimalFormat("00.00", new DecimalFormatSymbols(Locale.US));
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
@@ -25,9 +55,9 @@ public class Simulation {
 
     public Simulation(List<Particle> particles, String resultsPath) {
         // TODO: definir L, M y Rc y periodic
-        this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 5,
-                Parameters.SPEED * Parameters.REDRAW_PERIOD, false, particles);
-        this.resultsPath = String.format(Locale.US, "%s/%s/snapshots", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
+        this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 1,
+                Parameters.SPEED * Parameters.REDRAW_PERIOD * 2, false, particles);
+        this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
 
         File dir = new File(this.resultsPath);
         if (!dir.exists() && !dir.mkdirs()) {
@@ -61,8 +91,10 @@ public class Simulation {
 
             t = e.getTime();
 
-            if (e.getA() != null && e.getB() != null)
-                e.getA().bounceOff(e.getB());  // Colisión entre partículas
+            if (e.getA() != null && e.getB() != null) {
+                e.getA().bounceOff(e.getB());
+                recentCollisions.put(new ParticlePair(e.getA(), e.getB()), t);
+            }
             else if (e.getA() != null && e.getB() == null)
                 e.getA().bounceOffCircularWall();  // Rebote contra la pared
             else if (e.getA() == null && e.getB() != null)
@@ -85,42 +117,63 @@ public class Simulation {
         if (tObstacle > EPSILON && t + tObstacle < limit)
             pq.add(new Event(t + tObstacle, null, p));
 
-//        for (Particle other : cim.findNeighbors(p)) {
-//            if (p != other) {
-//                double dx = other.x - p.x;
-//                double dy = other.y - p.y;
-//                double dvx = other.vx - p.vx;
-//                double dvy = other.vy - p.vy;
-//
-//                double dist = Math.sqrt(dx * dx + dy * dy);
-//                double relVel = dx * dvx + dy * dvy;
-//
-//                if (relVel < 0 && dist < other.radius + p.radius) {
-//                    double d = dx * dx + dy * dy;
-//                    double a = dvx * dvx + dvy * dvy;
-//                    double b = 2 * (dx * dvx + dy * dvy);
-//                    double c = d - (p.radius + other.radius) * (p.radius + other.radius);
-//                    double discriminant = b * b - 4 * a * c;
-//
-//                    if (discriminant >= 0) {
-//                        double sqrtDisc = Math.sqrt(discriminant);
-//                        double t1 = (-b - sqrtDisc) / (2 * a);
-//                        double t2 = (-b + sqrtDisc) / (2 * a);
-//                        double timeCol = -1;
-//
-//                        if (t1 >= 0 && t2 >= 0)
-//                            timeCol = Math.min(t1, t2);
-//                        else if (t1 >= 0)
-//                            timeCol = t1;
-//                        else if (t2 >= 0)
-//                            timeCol = t2;
-//
-//                        if (timeCol > 0 && t + timeCol < limit)
-//                            pq.add(new Event(t + timeCol, p, other));
-//                    }
-//                }
-//            }
-//        }
+        for (Particle other : cim.findNeighbors(p)) {
+            if (p != other) {
+                ParticlePair pair = new ParticlePair(p, other);
+                Double lastCollision = recentCollisions.get(pair);
+                if (lastCollision != null && t - lastCollision < COLLISION_GRACE_PERIOD) {
+                    continue;
+                }
+                double dx = other.x - p.x;
+                double dy = other.y - p.y;
+                double dvx = other.vx - p.vx;
+                double dvy = other.vy - p.vy;
+
+                // Producto escalar entre vector posición relativa y vector velocidad relativa
+                double relVel = dx * dvx + dy * dvy;
+
+                // Solo procede si las partículas se están acercando
+                if (relVel < 0) {
+                    double d = dx * dx + dy * dy;
+                    double sigma = p.radius + other.radius;
+
+                    // Si las partículas ya están superpuestas pero se están alejando, ignorar
+                    if (d < sigma * sigma && relVel > 0) continue;
+
+                    double a = dvx * dvx + dvy * dvy;
+                    double b = 2 * relVel;
+                    double c = d - sigma * sigma;
+                    double discriminant = b * b - 4 * a * c;
+
+                    if (discriminant >= 0) {
+                        double sqrtDisc = Math.sqrt(discriminant);
+                        double t1 = (-b - sqrtDisc) / (2 * a);
+                        double t2 = (-b + sqrtDisc) / (2 * a);
+                        double timeCol = -1;
+
+                        // Si las partículas ya están superpuestas y acercándose
+                        if (c < 0) {
+                            // Calcular el tiempo cuando alcanzarán máxima superposición
+                            timeCol = -b / (2 * a);
+                            if (timeCol < EPSILON) {
+                                // Si el tiempo es muy pequeño, programa una colisión inmediata
+                                timeCol = EPSILON;
+                            }
+                        } else {
+                            if (t1 >= 0 && t2 >= 0)
+                                timeCol = Math.min(t1, t2);
+                            else if (t1 >= 0)
+                                timeCol = t1;
+                            else if (t2 >= 0)
+                                timeCol = t2;
+                        }
+
+                        if (timeCol > 0 && t + timeCol < limit)
+                            pq.add(new Event(t + timeCol, p, other));
+                    }
+                }
+            }
+        }
     }
 
     private double timeToCircularWallCollision(Particle p) {
@@ -198,11 +251,18 @@ public class Simulation {
     }
 
     private void saveState(double time) {
-        String fileName = String.format(Locale.US, "%s/snapshot-%s.txt", resultsPath, df.format(time));
+        // Guardar dentro de carpeta 'snapshots' dentro de resultsPath
+        File snapshotsDir = new File(resultsPath, "snapshots");
+        if (!snapshotsDir.exists() && !snapshotsDir.mkdirs()) {
+            System.err.println("Error al crear la carpeta de snapshots: " + snapshotsDir.getPath());
+            System.exit(1);
+        }
+
+        String fileName = String.format(Locale.US, "%s/snapshot-%.5f.txt", snapshotsDir.getPath(), time);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Particle p : cim.getParticles())
-                writer.write(String.format("%.5f %.5f\n", p.x, p.y));
+                writer.write(String.format(Locale.US, "%.5f %.5f\n", p.x, p.y));
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
             System.exit(1);
@@ -210,14 +270,16 @@ public class Simulation {
     }
 
     private void saveConfig() {
-        File dir = new File(this.resultsPath).getParentFile();
+        // Guardar config.json directamente en resultsPath
+        File dir = new File(resultsPath);
         if (!dir.exists() && !dir.mkdirs()) {
             System.err.println("Error al crear el directorio de resultados: " + resultsPath);
             System.exit(1);
         }
 
-        // write the Parameters attributes to a json file called 'config'
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(dir, "config.json")))) {
+        File configFile = new File(dir, "config.json");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(configFile))) {
             writer.write("{\n");
             writer.write("  \"big_radius\": " + Parameters.BIG_RADIUS + ",\n");
             writer.write("  \"small_radius\": " + Parameters.SMALL_RADIUS + ",\n");
@@ -232,5 +294,6 @@ public class Simulation {
             System.err.println("Error al guardar la configuración: " + e.getMessage());
         }
     }
+
 
 }
