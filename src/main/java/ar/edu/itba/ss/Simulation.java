@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -15,7 +16,7 @@ public class Simulation {
 
     private final double EPSILON = 1e-8;
 
-    private final DecimalFormat df = new DecimalFormat("00.00");
+    private final DecimalFormat df = new DecimalFormat("00.00", new DecimalFormatSymbols(Locale.US));
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final String resultsPath;
     private final CellIndexMethod cim;
@@ -26,7 +27,7 @@ public class Simulation {
         // TODO: definir L, M y Rc y periodic
         this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 5,
                 Parameters.SPEED * Parameters.REDRAW_PERIOD, false, particles);
-        this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
+        this.resultsPath = String.format(Locale.US, "%s/%s/snapshots", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
 
         File dir = new File(this.resultsPath);
         if (!dir.exists() && !dir.mkdirs()) {
@@ -35,6 +36,7 @@ public class Simulation {
         }
 
         saveState(0.0);  // Guardar el estado inicial
+        saveConfig();  // Guardar la configuración
     }
 
     public void simulate(double limit) {
@@ -204,6 +206,30 @@ public class Simulation {
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
             System.exit(1);
+        }
+    }
+
+    private void saveConfig() {
+        File dir = new File(this.resultsPath).getParentFile();
+        if (!dir.exists() && !dir.mkdirs()) {
+            System.err.println("Error al crear el directorio de resultados: " + resultsPath);
+            System.exit(1);
+        }
+
+        // write the Parameters attributes to a json file called 'config'
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(dir, "config.json")))) {
+            writer.write("{\n");
+            writer.write("  \"big_radius\": " + Parameters.BIG_RADIUS + ",\n");
+            writer.write("  \"small_radius\": " + Parameters.SMALL_RADIUS + ",\n");
+            writer.write("  \"particle_radius\": " + Parameters.PARTICLE_DEFAULT_RADIUS + ",\n");
+            writer.write("  \"speed\": " + Parameters.SPEED + ",\n");
+            writer.write("  \"mass\": " + Parameters.DEFAULT_MASS + ",\n");
+            writer.write("  \"time_limit\": " + Parameters.TIME_LIMIT + ",\n");
+            writer.write("  \"redraw_period\": " + Parameters.REDRAW_PERIOD + ",\n");
+            writer.write("  \"particle_count\": " + Parameters.PARTICLE_COUNT + "\n");
+            writer.write("}\n");
+        } catch (IOException e) {
+            System.err.println("Error al guardar la configuración: " + e.getMessage());
         }
     }
 
