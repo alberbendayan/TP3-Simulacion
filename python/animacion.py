@@ -49,19 +49,18 @@ def main():
     obstacle = patches.Circle((0, 0), obstacle_radius, fill=True, color="gray")
     ax.add_patch(obstacle)
 
-    # Calculate marker size in points^2 so that diameter matches PARTICLE_RADIUS in data units
-    fig_dpi = fig.dpi
-    xlim = ax.get_xlim()
-    data_width = xlim[1] - xlim[0]
-    points_per_data = (ax.get_window_extent().width / data_width) * 72 / fig_dpi
-    marker_size = (particle_radius * 2 * points_per_data) ** 2
+    # Inicializamos las partículas
+    particles = [patches.Circle((x, y), particle_radius, color="blue") for x, y in snapshots[0]]
 
-    scat = ax.scatter(snapshots[0][:, 0], snapshots[0][:, 1], s=marker_size, c="blue")
+    # Añadimos las partículas al gráfico
+    for p in particles:
+        ax.add_patch(p)
 
     def update(frame):
         positions = snapshots[frame]
-        scat.set_offsets(positions)
-        return (scat,)
+        for i, p in enumerate(particles):
+            p.center = positions[i]
+        return particles
 
     ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False, interval=redraw_period * 1000)
     ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=1 / redraw_period)

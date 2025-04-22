@@ -15,49 +15,16 @@ import java.util.PriorityQueue;
 public class Simulation {
 
     private final double EPSILON = 1e-8;
-    private static final double COLLISION_GRACE_PERIOD = 1e-3;  // Mayor que EPSILON
-
-    private static class ParticlePair {
-        final Particle p1, p2;
-
-        public ParticlePair(Particle p1, Particle p2) {
-            // Ordenar las partículas para mantener consistencia
-            if (p1.hashCode() <= p2.hashCode()) {
-                this.p1 = p1;
-                this.p2 = p2;
-            } else {
-                this.p1 = p2;
-                this.p2 = p1;
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ParticlePair that = (ParticlePair) o;
-            return (p1 == that.p1 && p2 == that.p2) || (p1 == that.p2 && p2 == that.p1);
-        }
-
-        @Override
-        public int hashCode() {
-            return p1.hashCode() + p2.hashCode();
-        }
-    }
-
-    private final java.util.Map<ParticlePair, Double> recentCollisions = new java.util.HashMap<>();
 
     private final DecimalFormat df = new DecimalFormat("00.00", new DecimalFormatSymbols(Locale.US));
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final String resultsPath;
-    private final CellIndexMethod cim;
+    private final List<Particle> particles;
 
     private double t = 0.0;
 
     public Simulation(List<Particle> particles, String resultsPath) {
-        // TODO: definir L, M y Rc y periodic
-        this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 1,
-                Parameters.BIG_RADIUS * 2, false, particles);
+        this.particles = particles;
         this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
 
         File dir = new File(this.resultsPath);
@@ -77,7 +44,7 @@ public class Simulation {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
-        for (Particle p : cim.getParticles()) {
+        for (Particle p : particles) {
             predict(p, limit);
         }
 
@@ -87,7 +54,7 @@ public class Simulation {
                 continue;
 
             double dt = e.getTime() - t;
-            for (Particle p : cim.getParticles())
+            for (Particle p : particles)
                 p.move(dt);
 
             t = e.getTime();
@@ -116,7 +83,7 @@ public class Simulation {
         if (tObstacle > EPSILON && t + tObstacle < limit)
             pq.add(new Event(t + tObstacle, null, p));
 
-        for (Particle other : cim.findNeighbors(p)) {
+        for (Particle other : particles) {
             if (other == p) continue;
             double dt = timeToOtherParticle(p, other);
             if (t + dt < limit && dt > EPSILON)
@@ -227,10 +194,10 @@ public class Simulation {
             System.exit(1);
         }
 
-        String fileName = String.format(Locale.US, "%s/snapshot-%.5f.txt", snapshotsDir.getPath(), time);
+        String fileName = String.format(Locale.US, "%s/snapshot-%s.txt", snapshotsDir.getPath(), df.format(time));
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            for (Particle p : cim.getParticles())
+            for (Particle p : particles)
                 writer.write(String.format(Locale.US, "%.5f %.5f\n", p.x, p.y));
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());

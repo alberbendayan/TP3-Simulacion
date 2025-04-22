@@ -27,7 +27,6 @@ public class Particle {
     }
 
     public void bounceOff(Particle that) {
-        System.out.println("Collision between " + this.id + " and " + that.id);
         double dx = that.x - this.x;
         double dy = that.y - this.y;
         double dvx = that.vx - this.vx;

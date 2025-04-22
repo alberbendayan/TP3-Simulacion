@@ -31,6 +31,12 @@ public class Main {
                     case "DEFAULT_MASS":
                         Parameters.DEFAULT_MASS = Double.parseDouble(value);
                         break;
+                    case "TIME_LIMIT":
+                        Parameters.TIME_LIMIT = Double.parseDouble(value);
+                        break;
+                    case "REDRAW_PERIOD":
+                        Parameters.REDRAW_PERIOD = Double.parseDouble(value);
+                        break;
                     case "PARTICLE_COUNT":
                         Parameters.PARTICLE_COUNT = Integer.parseInt(value);
                         break;
