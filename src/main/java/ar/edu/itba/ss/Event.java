@@ -27,8 +27,9 @@ public class Event implements Comparable<Event> {
     }
 
     public boolean isValid() {
-        return (a == null || a.getCollisionCount() == countA) &&
-                (b == null || b.getCollisionCount() == countB);
+        if (a == null || b == null)
+            return true;  // Siempre válido para colisiones con la pared u obstáculo
+        return (a.getCollisionCount() == countA) && (b.getCollisionCount() == countB);
     }
 
     @Override

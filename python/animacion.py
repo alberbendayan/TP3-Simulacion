@@ -42,7 +42,7 @@ def main():
     scat = ax.scatter(
         snapshots[0][:, 0],
         snapshots[0][:, 1],
-        # s=(PARTICLE_RADIUS * 2 * 1000) ** 2,
+        # s=(PARTICLE_RADIUS * 2 * 500) ** 2,
         c="blue",
     )
 
