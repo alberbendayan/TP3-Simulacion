@@ -32,24 +32,25 @@ def main():
     ax.set_xlim(-AREA_RADIUS, AREA_RADIUS)
     ax.set_ylim(-AREA_RADIUS, AREA_RADIUS)
 
-    area = patches.Circle((0, 0), AREA_RADIUS, fill=False, color="orange", lw=4)
+    area = patches.Circle((0, 0), AREA_RADIUS, fill=False, color="orange")
     ax.add_patch(area)
 
     obstacle = patches.Circle((0, 0), OBSTACLE_RADIUS, fill=True, color="gray")
     ax.add_patch(obstacle)
 
-    # scat = ax.scatter([], [], s=(PARTICLE_RADIUS * 2 * 1000) ** 2, color="blue")
+    # Calculate marker size in points^2 so that diameter matches PARTICLE_RADIUS in data units
+    fig_dpi = fig.dpi
+    xlim = ax.get_xlim()
+    data_width = xlim[1] - xlim[0]
+    points_per_data = (ax.get_window_extent().width / data_width) * 72 / fig_dpi
+    marker_size = (PARTICLE_RADIUS * 2 * points_per_data) ** 2
+
     scat = ax.scatter(
         snapshots[0][:, 0],
         snapshots[0][:, 1],
-        # s=(PARTICLE_RADIUS * 2 * 500) ** 2,
+        s=marker_size,
         c="blue",
     )
-
-    # def init():
-    #     # scat.set_offsets(np.empty((0, 2)))
-    #     scat.set_offsets([])
-    #     return (scat,)
 
     def update(frame):
         positions = snapshots[frame]
@@ -59,7 +60,7 @@ def main():
     ani = animation.FuncAnimation(
         fig, update, frames=len(snapshots), blit=False, interval=100
     )
-    ani.save("animation.mp4", writer="ffmpeg")
+    ani.save("animation.mp4", writer="ffmpeg", fps=60)
     plt.show()
 
 

@@ -22,9 +22,10 @@ public class Simulation {
 
     private double t = 0.0;
 
-    public Simulation(List<Particle> particles, String resultsPath, double t) {
+    public Simulation(List<Particle> particles, String resultsPath) {
         // TODO: definir L, M y Rc y periodic
-        this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 5, Parameters.SPEED * t, false, particles);
+        this.cim = new CellIndexMethod(particles.size(), Parameters.BIG_RADIUS * 2, 5,
+                Parameters.SPEED * Parameters.REDRAW_PERIOD, false, particles);
         this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
 
         File dir = new File(this.resultsPath);
@@ -36,10 +37,10 @@ public class Simulation {
         saveState(0.0);  // Guardar el estado inicial
     }
 
-    public void simulate(double limit, double redrawPeriod) {
+    public void simulate(double limit) {
         t = 0.0;
 
-        for (double redrawTime = redrawPeriod; redrawTime <= limit; redrawTime += redrawPeriod) {
+        for (double redrawTime = Parameters.REDRAW_PERIOD; redrawTime <= limit; redrawTime += Parameters.REDRAW_PERIOD) {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
@@ -78,10 +79,10 @@ public class Simulation {
         if (tWall > EPSILON && t + tWall < limit)
             pq.add(new Event(t + tWall, p, null));
 
-//        double tObstacle = timeToObstacleCollision(p);
-//        if (tObstacle > 0 && t + tObstacle < limit)
-//            pq.add(new Event(t + tObstacle, null, p));
-//
+        double tObstacle = timeToObstacleCollision(p);
+        if (tObstacle > EPSILON && t + tObstacle < limit)
+            pq.add(new Event(t + tObstacle, null, p));
+
 //        for (Particle other : cim.findNeighbors(p)) {
 //            if (p != other) {
 //                double dx = other.x - p.x;
@@ -143,7 +144,7 @@ public class Simulation {
 
         // Si el discriminante es negativo, no hay colisión
         if (discriminant < 0) {
-            return -1;  // No hay colisión
+            return Double.POSITIVE_INFINITY;  // No hay colisión
         }
 
         // Calculamos el tiempo de colisión
@@ -158,29 +159,40 @@ public class Simulation {
         } else if (t2 >= EPSILON) {
             return t2;
         } else {
-            return -1;  // No hay colisión en el futuro
+            return Double.POSITIVE_INFINITY;  // No hay colisión en el futuro
         }
     }
 
     private double timeToObstacleCollision(Particle p) {
-        double obstacleRadius = 0.005;
-        double px = p.x, py = p.y;
-        double vx = p.vx, vy = p.vy;
-        double pr = p.radius;
+        // Centro del obstáculo en (0, 0), radio pequeño
+        double R = Parameters.SMALL_RADIUS;
+
+        double x0 = p.x;
+        double y0 = p.y;
+        double vx = p.vx;
+        double vy = p.vy;
+        double effectiveRadius = R + p.radius;
 
         double A = vx * vx + vy * vy;
-        double B = 2 * (px * vx + py * vy);
-        double C = px * px + py * py - (obstacleRadius + pr) * (obstacleRadius + pr);
+        double B = 2 * (x0 * vx + y0 * vy);
+        double C = x0 * x0 + y0 * y0 - effectiveRadius * effectiveRadius;
 
         double discriminant = B * B - 4 * A * C;
-        if (discriminant < 0) return -1;
+        if (discriminant < 0)
+            return Double.POSITIVE_INFINITY;
 
         double sqrtD = Math.sqrt(discriminant);
         double t1 = (-B + sqrtD) / (2 * A);
         double t2 = (-B - sqrtD) / (2 * A);
 
-        double t = (t1 > 0 && t2 > 0) ? Math.min(t1, t2) : (t1 > 0 ? t1 : t2);
-        return t > 0 ? t : -1;
+        if (t1 >= EPSILON && t2 >= EPSILON)
+            return Math.min(t1, t2);
+        else if (t1 >= EPSILON)
+            return t1;
+        else if (t2 >= EPSILON)
+            return t2;
+        else
+            return Double.POSITIVE_INFINITY;
     }
 
     private void saveState(double time) {

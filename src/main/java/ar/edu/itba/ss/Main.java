@@ -53,7 +53,7 @@ public class Main {
             while (!valid) {
                 valid = true;
 
-                double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS - Parameters.PARTICLE_DEFAULT_RADIUS) + Parameters.SMALL_RADIUS;
+                double radius = rand.nextDouble() * (Parameters.BIG_RADIUS - Parameters.SMALL_RADIUS - Parameters.PARTICLE_DEFAULT_RADIUS * 2) + Parameters.SMALL_RADIUS + Parameters.PARTICLE_DEFAULT_RADIUS;
                 double anglePos = rand.nextDouble() * 2 * Math.PI;
                 x = radius * Math.cos(anglePos);
                 y = radius * Math.sin(anglePos);
@@ -77,8 +77,8 @@ public class Main {
             particles.add(new Particle(x, y, vx, vy));
         }
 
-        Simulation sim = new Simulation(particles, "results", 0.05);
-        sim.simulate(50.0, 0.05);
+        Simulation sim = new Simulation(particles, "results");
+        sim.simulate(Parameters.TIME_LIMIT);
     }
 
 }

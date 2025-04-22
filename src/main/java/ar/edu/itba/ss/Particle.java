@@ -52,8 +52,14 @@ public class Particle {
         double ny = y / dist;
         double dot = vx * nx + vy * ny;
 
+        // Reflect velocity
         vx -= 2 * dot * nx;
         vy -= 2 * dot * ny;
+
+        // Empujón pequeño para sacar la partícula del borde
+        double EPSILON_DISPLACEMENT = 1e-6;
+        x += vx * EPSILON_DISPLACEMENT;
+        y += vy * EPSILON_DISPLACEMENT;
 
         collisionCount++;
     }
