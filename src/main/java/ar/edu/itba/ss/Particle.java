@@ -2,12 +2,17 @@ package ar.edu.itba.ss;
 
 public class Particle {
 
+    public static int LAST_ID = 1;
+
+    public final int id;
+    public final double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
+
     public double x, y;
     public double vx, vy;
-    public final double radius = Parameters.PARTICLE_DEFAULT_RADIUS;
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
+        this.id = LAST_ID++;
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -61,4 +66,11 @@ public class Particle {
     public int getCollisionCount() {
         return collisionCount;
     }
+
+    public double distanceTo(Particle other) {
+        double dx = this.x - other.x;
+        double dy = this.y - other.y;
+        return Math.sqrt(dx * dx + dy * dy) - other.radius;
+    }
+
 }

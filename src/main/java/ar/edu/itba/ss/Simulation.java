@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.PriorityQueue;
 
@@ -14,13 +15,14 @@ public class Simulation {
 
     private final DecimalFormat df = new DecimalFormat("00.00");
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
-    private final Particle[] particles;
     private final String resultsPath;
+    private final CellIndexMethod cim;
 
     private double t = 0.0;
 
-    public Simulation(Particle[] particles, String resultsPath) {
-        this.particles = particles;
+    public Simulation(List<Particle> particles, String resultsPath) {
+        // TODO: definir L, M y Rc y periodic
+        this.cim = new CellIndexMethod(particles.size(), 1.0, 10, 0.1, false, particles);
         this.resultsPath = String.format(Locale.US, "%s/%s", resultsPath, new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
 
         File dir = new File(this.resultsPath);
@@ -39,7 +41,7 @@ public class Simulation {
             pq.add(new Event(redrawTime, null, null));  // Evento para cada paso de simulación
         }
 
-        for (Particle p : particles) {
+        for (Particle p : cim.getParticles()) {
             predict(p, limit);
         }
 
@@ -49,7 +51,7 @@ public class Simulation {
                 continue;
 
             double dt = e.getTime() - t;
-            for (Particle p : particles)
+            for (Particle p : cim.getParticles())
                 p.move(dt);
 
             t = e.getTime();
@@ -70,7 +72,6 @@ public class Simulation {
     }
 
     private void predict(Particle p, double limit) {
-
         double tWall = timeToCircularWallCollision(p);
         if (tWall > 0 && t + tWall < limit)
             pq.add(new Event(t + tWall, p, null));
@@ -79,7 +80,7 @@ public class Simulation {
         if (tObstacle > 0 && t + tObstacle < limit)
             pq.add(new Event(t + tObstacle, null, p));
 
-        for (Particle other : particles) {
+        for (Particle other : cim.findNeighbors(p)) {
             if (p != other) {
                 double dx = other.x - p.x;
                 double dy = other.y - p.y;
@@ -163,11 +164,12 @@ public class Simulation {
         String fileName = String.format(Locale.US, "%s/snapshot-%s.txt", resultsPath, df.format(time));
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            for (Particle p : particles)
+            for (Particle p : cim.getParticles())
                 writer.write(String.format("%.5f %.5f\n", p.x, p.y));
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
             System.exit(1);
         }
     }
+
 }

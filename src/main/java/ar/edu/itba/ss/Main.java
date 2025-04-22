@@ -1,5 +1,7 @@
 package ar.edu.itba.ss;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Main {
@@ -40,10 +42,10 @@ public class Main {
             }
         }
 
-        Particle[] particles = new Particle[Parameters.PARTICLE_COUNT];
+        List<Particle> particles = new ArrayList<>();
         Random rand = new Random();
 
-        for (int i = 0; i < particles.length; i++) {
+        for (int i = 0; i < Parameters.PARTICLE_COUNT; i++) {
             double angle = rand.nextDouble() * 2 * Math.PI;
             double speed = Parameters.SPEED;
             double vx = speed * Math.cos(angle);
@@ -54,13 +56,7 @@ public class Main {
             double x = radius * Math.cos(anglePos);
             double y = radius * Math.sin(anglePos);
 
-            particles[i] = new Particle(x, y, vx, vy);
-        }
-
-        try {
-            new java.io.PrintWriter("output.txt").close();
-        } catch (Exception e) {
-            System.err.println("No se pudo limpiar output.txt");
+            particles.add(new Particle(x, y, vx, vy));
         }
 
         Simulation sim = new Simulation(particles, "results");
