@@ -52,6 +52,11 @@ public class Particle {
 
         this.collisionCount++;
         that.collisionCount++;
+
+        if (this.mass == Parameters.OBSTACLE_MASS && this.radius < Parameters.SMALL_RADIUS * 2)
+            this.radius += Parameters.PARTICLE_RADIUS;
+        if (that.mass == Parameters.OBSTACLE_MASS && that.radius < Parameters.SMALL_RADIUS * 2)
+            that.radius += Parameters.PARTICLE_RADIUS;
     }
 
     public void bounceOffCircularWall() {

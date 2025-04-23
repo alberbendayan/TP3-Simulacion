@@ -50,20 +50,26 @@ def main():
         obstacle = patches.Circle((0, 0), obstacle_radius, fill=True, color="gray")
         ax.add_patch(obstacle)
 
-    # Inicializamos las partículas
-    def color(r):
-        return "blue" if r == particle_radius else "gray"
-
-    particles = [patches.Circle((x, y), r, color=color(r)) for x, y, _, _, r in snapshots[0]]
+    particles = [patches.Circle((x, y), r, color="black") for x, y, _, _, r in snapshots[0][:-1]]
+    last_particle = snapshots[0][-1]
+    particles.append(patches.Circle((0, 0), last_particle[4], color="gray"))
 
     # Añadimos las partículas al gráfico
     for p in particles:
         ax.add_patch(p)
 
+    colors = ["red", "blue", "green", "purple", "orange", "yellow", "pink"]
+    count = 0
+
     def update(frame):
+        nonlocal count
+        count += 1
         positions = snapshots[frame]
         for i, p in enumerate(particles):
             p.center = positions[i][:2]
+            if i == len(particles) - 1:
+                p.set_radius(positions[i][4])
+                p.set_color(colors[count // 5 % len(colors)])
         return particles
 
     ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False)
