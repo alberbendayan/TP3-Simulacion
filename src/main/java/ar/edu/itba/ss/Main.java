@@ -89,6 +89,7 @@ public class Main {
         if (Parameters.OBSTACLE_MASS > 0) {
             particles.add(new Particle(0, 0, 0, 0, Parameters.OBSTACLE_MASS, Parameters.SMALL_RADIUS));
         }
+         
 
         Simulation sim = new Simulation(particles, "results");
         sim.simulate(Parameters.TIME_LIMIT);

@@ -60,7 +60,7 @@ def main():
             continue
 
         for row in snapshot:
-            x, y, vx, vy = row
+            x, y, vx, vy, _ = row
             r = np.hypot(x, y)
             v = np.hypot(vx, vy)
             impulso = 2 * mass * v
