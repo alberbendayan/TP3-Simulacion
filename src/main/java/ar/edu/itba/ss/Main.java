@@ -37,6 +37,9 @@ public class Main {
                     case "REDRAW_PERIOD":
                         Parameters.REDRAW_PERIOD = Double.parseDouble(value);
                         break;
+                    case "OBSTACLE_MASS":
+                        Parameters.OBSTACLE_MASS = Double.parseDouble(value);
+                        break;
                     case "PARTICLE_COUNT":
                         Parameters.PARTICLE_COUNT = Integer.parseInt(value);
                         break;
@@ -81,6 +84,10 @@ public class Main {
             double vx = speed * Math.cos(angle);
             double vy = speed * Math.sin(angle);
             particles.add(new Particle(x, y, vx, vy));
+        }
+
+        if (Parameters.OBSTACLE_MASS > 0) {
+            particles.add(new Particle(0, 0, 0, 0, Parameters.OBSTACLE_MASS, Parameters.SMALL_RADIUS));
         }
 
         Simulation sim = new Simulation(particles, "results");

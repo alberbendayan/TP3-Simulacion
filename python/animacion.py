@@ -15,7 +15,7 @@ def read_snapshots(directory):
 
     for fname in files:
         with open(fname) as f:
-            states = [list(map(float, line.split()[:2])) for line in f if line.strip()]
+            states = [list(map(float, line.split())) for line in f if line.strip()]
             snapshots.append(np.array(states))
 
     return snapshots
@@ -35,7 +35,7 @@ def main():
         area_radius = config["big_radius"]
         obstacle_radius = config["small_radius"]
         particle_radius = config["particle_radius"]
-        redraw_period = config["redraw_period"]
+        obstacle_mass = config["obstacle_mass"]
 
     fig, ax = plt.subplots()
 
@@ -46,11 +46,15 @@ def main():
     area = patches.Circle((0, 0), area_radius, fill=False, color="orange")
     ax.add_patch(area)
 
-    obstacle = patches.Circle((0, 0), obstacle_radius, fill=True, color="gray")
-    ax.add_patch(obstacle)
+    if obstacle_mass == 0:
+        obstacle = patches.Circle((0, 0), obstacle_radius, fill=True, color="gray")
+        ax.add_patch(obstacle)
 
     # Inicializamos las partículas
-    particles = [patches.Circle((x, y), particle_radius, color="blue") for x, y in snapshots[0]]
+    def color(r):
+        return "blue" if r == particle_radius else "gray"
+
+    particles = [patches.Circle((x, y), r, color=color(r)) for x, y, _, _, r in snapshots[0]]
 
     # Añadimos las partículas al gráfico
     for p in particles:
@@ -59,11 +63,11 @@ def main():
     def update(frame):
         positions = snapshots[frame]
         for i, p in enumerate(particles):
-            p.center = positions[i]
+            p.center = positions[i][:2]
         return particles
 
     ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False)
-    ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=1 / redraw_period)
+    ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=60)
 
 
 if __name__ == "__main__":

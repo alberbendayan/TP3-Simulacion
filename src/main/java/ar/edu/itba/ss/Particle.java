@@ -5,11 +5,12 @@ public class Particle {
     public static int LAST_ID = 1;
 
     public final int id;
-    public final double radius = Parameters.PARTICLE_RADIUS;
 
     public double x, y;
     public double vx, vy;
-    public double mass;
+    public double mass = Parameters.MASS;
+    public double radius = Parameters.PARTICLE_RADIUS;
+
     private int collisionCount = 0;
 
     public Particle(double x, double y, double vx, double vy) {
@@ -18,7 +19,12 @@ public class Particle {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
-        this.mass = Parameters.MASS;
+    }
+
+    public Particle(double x, double y, double vx, double vy, double mass, double radius) {
+        this(x, y, vx, vy);
+        this.mass = mass;
+        this.radius = radius;
     }
 
     public void move(double dt) {

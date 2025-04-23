@@ -75,9 +75,11 @@ public class Simulation {
         if (tWall > EPSILON && t + tWall < limit)
             pq.add(new Event(t + tWall, p, null));
 
-        double tObstacle = timeToObstacleCollision(p);
-        if (tObstacle > EPSILON && t + tObstacle < limit)
-            pq.add(new Event(t + tObstacle, null, p));
+        if (Parameters.OBSTACLE_MASS > 0) {
+            double tObstacle = timeToObstacleCollision(p);
+            if (tObstacle > EPSILON && t + tObstacle < limit)
+                pq.add(new Event(t + tObstacle, null, p));
+        }
 
         for (Particle other : particles) {
             if (other == p) continue;
@@ -194,7 +196,8 @@ public class Simulation {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Particle p : particles)
-                writer.write(String.format(Locale.US, "%.5f %.5f %.5f %.5f\n", p.x, p.y, p.vx, p.vy));
+                writer.write(String.format(Locale.US, "%.5f %.5f %.5f %.5f %.5f\n",
+                        p.x, p.y, p.vx, p.vy, p.radius));
         } catch (IOException e) {
             System.err.println("Error al guardar snapshot: " + e.getMessage());
             System.exit(1);
@@ -220,6 +223,7 @@ public class Simulation {
             writer.write("  \"mass\": " + Parameters.MASS + ",\n");
             writer.write("  \"time_limit\": " + Parameters.TIME_LIMIT + ",\n");
             writer.write("  \"redraw_period\": " + Parameters.REDRAW_PERIOD + ",\n");
+            writer.write("  \"obstacle_mass\": " + Parameters.OBSTACLE_MASS + ",\n");
             writer.write("  \"particle_count\": " + Parameters.PARTICLE_COUNT + "\n");
             writer.write("}\n");
         } catch (IOException e) {
