@@ -16,7 +16,7 @@ public class Simulation {
 
     private final double EPSILON = 1e-8;
 
-    private final DecimalFormat df = new DecimalFormat("00.00", new DecimalFormatSymbols(Locale.US));
+    private final DecimalFormat df = new DecimalFormat("00.0000", new DecimalFormatSymbols(Locale.US));
     private final PriorityQueue<Event> pq = new PriorityQueue<>();
     private final String resultsPath;
     private final List<Particle> particles;
