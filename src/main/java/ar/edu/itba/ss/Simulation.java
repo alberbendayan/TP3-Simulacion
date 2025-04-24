@@ -75,7 +75,6 @@ public class Simulation {
         if (tWall > EPSILON && t + tWall < limit)
             pq.add(new Event(t + tWall, p, null));
 
-        // No falta el else?
         if (Parameters.OBSTACLE_MASS == 0) {
             double tObstacle = timeToObstacleCollision(p);
             if (tObstacle > EPSILON && t + tObstacle < limit)
