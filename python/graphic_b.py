@@ -1,16 +1,19 @@
 import argparse
 import json
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-def read_snapshots(directory):
+def read_snapshots(directory, time_limit):
     files = sorted(f for f in os.listdir(directory) if f.startswith("snapshot-") and f.endswith(".txt"))
     snapshots = []
     times = []
     for fname in files:
         time = float(fname.replace("snapshot-", "").replace(".txt", ""))
+        if time_limit != 0 and time > time_limit:
+            break
         times.append(time)
         with open(os.path.join(directory, fname)) as f:
             data = [list(map(float, line.split())) for line in f if line.strip()]
@@ -18,7 +21,7 @@ def read_snapshots(directory):
     return np.array(times), snapshots
 
 
-def procesar_simulacion(base_dir, delta_t, delta_r):
+def procesar_simulacion(base_dir, delta_t, delta_r, time_limit):
     snap_dir = os.path.join(base_dir, "snapshots")
     config_file = os.path.join(base_dir, "config.json")
 
@@ -32,7 +35,7 @@ def procesar_simulacion(base_dir, delta_t, delta_r):
     L_pared = 2 * np.pi * big_radius
     L_obstaculo = 2 * np.pi * small_radius
 
-    times, snapshots = read_snapshots(snap_dir)
+    times, snapshots = read_snapshots(snap_dir, time_limit)
 
     t_min, t_max = times[0], times[-1]
     bin_edges = np.arange(t_min, t_max + delta_t, delta_t)
@@ -66,53 +69,35 @@ def procesar_simulacion(base_dir, delta_t, delta_r):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("dir_v3", help="Directorio para v0=3")
-    parser.add_argument("dir_v6", help="Directorio para v0=6")
-    parser.add_argument("dir_v10", help="Directorio para v0=10")
+    parser.add_argument("dirs", nargs="+", help="Carpetas de simulaciones con la partícula grande")
     parser.add_argument("--delta-t", type=float, default=0.1)
-    parser.add_argument("--delta-r", type=float, default=0.001)
+    parser.add_argument("--delta-r", type=float, default=0.00055)
+    parser.add_argument("--time-limit", type=float, default=0.0, help="Tiempo máximo para la simulación")
     args = parser.parse_args()
 
-
-    config_file3 = os.path.join(args.dir_v3, "config.json")
-    with open(config_file3) as f:
-        config3 = json.load(f)
-        v3 = config3["speed"]
-
-    config_file6 = os.path.join(args.dir_v6, "config.json")
-    with open(config_file6) as f:
-        config6 = json.load(f)
-        v6 = config6["speed"]
-
-    config_file10 = os.path.join(args.dir_v10, "config.json")
-    with open(config_file10) as f:
-        config10 = json.load(f)
-        v10 = config10["speed"]
-
     datos = {}
-    for v0, path in zip([v3, v6, v10], [args.dir_v3, args.dir_v6, args.dir_v10]):
-        P = procesar_simulacion(path, args.delta_t, args.delta_r)
-        T = v0 ** 2
+    for path in args.dirs:
+        with open(os.path.join(path, "config.json")) as f:
+            config = json.load(f)
+
+        v0 = config["speed"]
+        P = procesar_simulacion(path, args.delta_t, args.delta_r, args.time_limit)
+        T = v0**2
         datos[T] = P
 
     Ts = sorted(datos.keys())
     Ps = [datos[T] for T in Ts]
 
     plt.figure(figsize=(8, 5))
-    plt.plot(Ts, Ps, '-', color='blue', label="P vs T (T = v₀²)")
-    plt.scatter(Ts, Ps, color='black', zorder=5)
-
-    T6 = v6 ** 2
-    if T6 in datos:
-        plt.scatter([T6], [datos[T6]], color='black', zorder=5)
-
-    plt.xlabel("Temperatura relativa (T ∝ v₀²)")
+    plt.plot(Ts, Ps, "o:", color="blue", linewidth=1)
+    plt.xlabel("Temperatura")
     plt.ylabel("Presión promedio [N/m]")
     plt.grid(True)
-    plt.legend()
     plt.tight_layout()
-    plt.savefig("presion_vs_temperatura.png")
+    for dirpath in args.dirs:
+        plt.savefig(os.path.join(dirpath, "presion_vs_temperatura.png"))
     plt.show()
+
 
 if __name__ == "__main__":
     main()

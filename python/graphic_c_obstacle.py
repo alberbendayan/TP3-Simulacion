@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -70,7 +71,6 @@ def main():
 
         label = os.path.basename(os.path.normpath(dirpath))
         plt.plot(tiempos, total, label=f"{label} - Choques totales")
-
 
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Cantidad de choques totales")
