@@ -108,7 +108,6 @@ def main():
 
     plt.xlabel("Temperatura relativa (T ∝ v₀²)")
     plt.ylabel("Presión promedio [N/m]")
-    plt.title("Presión vs Temperatura relativa")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()

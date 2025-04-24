@@ -1,15 +1,13 @@
 import argparse
 import json
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 def read_snapshots(directory):
     files = sorted(f for f in os.listdir(directory) if f.startswith("snapshot-") and f.endswith(".txt"))
-    times = []
-    snapshots = []
+    times, snapshots = [], []
     for fname in files:
         time = float(fname.replace("snapshot-", "").replace(".txt", ""))
         times.append(time)
@@ -33,7 +31,6 @@ def contar_choques_obstaculo(path, delta_r=0.001):
     particulas_ya_chocadas = set()
     choques_totales = 0
     choques_unicos = 0
-
     tiempos = []
 
     for t, snap in zip(times, snapshots):
@@ -57,32 +54,31 @@ def contar_choques_obstaculo(path, delta_r=0.001):
         choque_total.append(choques_totales)
         choque_distintos.append(choques_unicos)
 
-    return np.array(tiempos), np.array(choque_total), np.array(choque_distintos)
+    return np.array(tiempos), np.array(choque_total), np.array(choque_distintos), particle_count
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("simdir", help="Directorio de la simulación")
+    parser.add_argument("dirs", nargs="+", help="Carpetas de simulaciones")
     parser.add_argument("--delta-r", type=float, default=0.001, help="Tolerancia al obstáculo")
     args = parser.parse_args()
 
-    tiempos, total, distintos = contar_choques_obstaculo(args.simdir, delta_r=args.delta_r)
-
-    with open(os.path.join(args.simdir, "config.json")) as f:
-        config = json.load(f)
-
-    # Gráfico
     plt.figure()
-    plt.plot(tiempos, total, label="Choques totales con obstáculo (b)")
-    plt.plot(tiempos, distintos, label="Choques únicos por partícula (a)")
-    plt.xlabel("Tiempo [s]")
-    plt.ylabel("Cantidad de choques")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("choques_obstaculo_vs_tiempo.png")
-    plt.show()
 
+    for dirpath in args.dirs:
+        tiempos, total, distintos, particle_count = contar_choques_obstaculo(dirpath, delta_r=args.delta_r)
+
+        label = os.path.basename(os.path.normpath(dirpath))
+        plt.plot(tiempos, total, label=f"{label} - Choques totales")
+
+
+    plt.xlabel("Tiempo [s]")
+    plt.ylabel("Cantidad de choques totales")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("choques_obstaculo_multisim.png")
+    plt.show()
 
 
 if __name__ == "__main__":

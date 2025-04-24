@@ -80,7 +80,6 @@ def main():
     plt.plot(tiempos_medios, presion_obstaculo, label="Presión Obstáculo")
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [N/m]")
-    plt.title("Presión en función del tiempo")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()

@@ -81,8 +81,6 @@ def main():
 
     pendiente, intercepto, D = ajustar_dcm(t_bins, dcm_promedio)
 
-    print(f"Ajuste lineal: DCM ≈ {pendiente:.4e}·t + {intercepto:.2e}")
-    print(f"→ Coeficiente de difusión D ≈ {D:.4e} m²/s")
 
     # Plot
     plt.figure()
@@ -90,7 +88,6 @@ def main():
     plt.plot(t_bins, pendiente * t_bins + intercepto, "r-", label=f"Recta de ajuste (y={pendiente:.2e}·t)")
     plt.xlabel("Tiempo (s)")
     plt.ylabel("DCM (m²)")
-    plt.title("DCM promedio de la partícula grande")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
