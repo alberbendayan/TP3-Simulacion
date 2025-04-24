@@ -41,3 +41,4 @@ build/
 *.vim
 output.txt
 results/
+*.png
