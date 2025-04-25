@@ -13,10 +13,11 @@ def read_snapshots(directory):
     files = sorted(glob.glob(os.path.join(directory, "snapshot-*.txt")))
     snapshots = []
 
-    for fname in files:
-        with open(fname) as f:
-            states = [list(map(float, line.split())) for line in f if line.strip()]
-            snapshots.append(np.array(states))
+    for i, fname in enumerate(files):
+        if i % 100 == 0:
+            with open(fname) as f:
+                states = [list(map(float, line.split())) for line in f if line.strip()]
+                snapshots.append(np.array(states))
 
     return snapshots
 
@@ -67,7 +68,8 @@ def main():
         return particles
 
     ani = animation.FuncAnimation(fig, update, frames=len(snapshots), blit=False)
-    ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=60)
+    fps = round(len(snapshots) / config["time_limit"], 2)
+    ani.save(os.path.join(directory, "animation.mp4"), writer="ffmpeg", fps=fps)
 
 
 if __name__ == "__main__":
