@@ -90,8 +90,9 @@ def main():
 
     plt.figure(figsize=(8, 5))
     plt.plot(Ts, Ps, "o:", color="blue", linewidth=1)
-    plt.xlabel("Temperatura")
-    plt.ylabel("Presión promedio [N/m]")
+    plt.xlabel("Temperatura", fontsize=14)
+    plt.ylabel("Presión promedio [N/m]", fontsize=14)
+    plt.tick_params(axis="both", labelsize=12)
     plt.grid(True)
     plt.tight_layout()
     for dirpath in args.dirs:
