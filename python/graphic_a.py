@@ -22,15 +22,7 @@ def read_snapshots(directory, time_limit):
     return np.array(times), snapshots
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("basedir", help="Directorio con config.json y carpeta snapshots/")
-    parser.add_argument("--delta-t", type=float, default=0.1, help="Tamaño del intervalo de tiempo")
-    parser.add_argument("--delta-r", type=float, default=0.00055, help="Tolerancia de proximidad al borde")
-    parser.add_argument("--time-limit", type=float, default=0.0, help="Tiempo máximo para la simulación")
-    args = parser.parse_args()
-
-    base_dir = args.basedir
+def procesar_simulacion(base_dir, delta_t, delta_r, time_limit):
     snap_dir = os.path.join(base_dir, "snapshots")
     config_file = os.path.join(base_dir, "config.json")
 
@@ -44,15 +36,11 @@ def main():
     L_pared = 2 * np.pi * big_radius
     L_obstaculo = 2 * np.pi * small_radius
 
-    delta_t = args.delta_t
-    delta_r = args.delta_r
-
-    times, snapshots = read_snapshots(snap_dir, args.time_limit)
+    times, snapshots = read_snapshots(snap_dir, time_limit)
 
     t_min, t_max = times[0], times[-1]
     bin_edges = np.arange(t_min, t_max + delta_t, delta_t)
 
-    # acumuladores por intervalo
     pared_impulsos = np.zeros(len(bin_edges) - 1)
     obstaculo_impulsos = np.zeros(len(bin_edges) - 1)
 
@@ -75,20 +63,42 @@ def main():
     presion_pared = pared_impulsos / (delta_t * L_pared)
     presion_obstaculo = obstaculo_impulsos / (delta_t * L_obstaculo)
 
-    # graficar
-    plt.figure(figsize=(10, 5))
-    plt.plot(tiempos_medios, presion_pared, "o-", color="blue", linewidth=1, label="Presión Pared")
-    plt.axhline(y=np.mean(presion_pared), color="blue", linestyle="--", linewidth=1.5, label="Presión Promedio Pared")
-    plt.plot(tiempos_medios, presion_obstaculo, "o-", color="red", linewidth=1, label="Presión Obstáculo")
-    plt.axhline(y=np.mean(presion_obstaculo), color="red", linestyle="--", linewidth=1.5, label="Presión Promedio Obstáculo")
+    return tiempos_medios, presion_pared, presion_obstaculo, os.path.basename(base_dir)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dirs", nargs="+", help="Directorios con config.json y carpeta snapshots/")
+    parser.add_argument("--delta-t", type=float, default=0.1, help="Tamaño del intervalo de tiempo")
+    parser.add_argument("--delta-r", type=float, default=0.00055, help="Tolerancia de proximidad al borde")
+    parser.add_argument("--time-limit", type=float, default=0.0, help="Tiempo máximo para la simulación")
+    args = parser.parse_args()
+
+    plt.figure(figsize=(12, 6))
+    first = False
+
+    for i, base_dir in enumerate(args.dirs):
+        tiempos, presion_pared, presion_obstaculo, nombre = procesar_simulacion(
+            base_dir, args.delta_t, args.delta_r, args.time_limit
+        )
+
+        if not first:
+            plt.plot(tiempos, presion_pared, "o-", label="Presión pared", color="blue")
+            plt.plot(tiempos, presion_obstaculo, "o-", label="Presión obstáculo", color="red")
+            first = True
+        else:
+            plt.plot(tiempos, presion_pared, "o-", color="blue")
+            plt.plot(tiempos, presion_obstaculo, "o-", color="red")
+        # plt.axhline(y=np.mean(presion_pared), linestyle=":", color=color, alpha=0.5)
+        # plt.axhline(y=np.mean(presion_obstaculo), linestyle="--", color=color, alpha=0.3)
+
     plt.xlabel("Tiempo [s]", fontsize=14)
     plt.ylabel("Presión [N/m]", fontsize=14)
-    plt.legend(loc="lower left")
-    plt.tick_params(axis="both", labelsize=12)
-    plt.ylim(0, None)
+    plt.title("Presión vs. Tiempo en múltiples simulaciones")
+    plt.legend(fontsize=9)
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(os.path.join(base_dir, "presiones_vs_tiempo.png"))
+    plt.savefig("presiones_comparadas.png")
     plt.show()
 
 
